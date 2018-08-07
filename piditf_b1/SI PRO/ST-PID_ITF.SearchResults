@@ -1,0 +1,80 @@
+---- SubDealParaErr Matches (4 in 2 files) ----
+PstPIDITF.h (c:\´æ´¢\...\piditf_b1):32
+void SubDealParaErr(int &Ierr);
+int RecvSendPhyIO();
+void RTSTPhySimulating();
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):117
+   SubDealParaErr(Ierr);
+   fprintf(fdbg,"After SubDealParaErr,Ierr=%d \n ",Ierr);
+   fflush(fdbg);
+   
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):151
+   SubDealParaErr(Ierr);
+   printf("After PSTInit2 Ierr=%d\n",Ierr);
+   
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):822
+void SubDealParaErr(int &ErrorNo){
+   int *IDataRecv=new int[mpiid.numprocs];
+   //flog<<"Before MPI_Gather ErrorNo="<<ErrorNo<<endl;
+---- RTSTPhySimulating Matches (4 in 2 files) ----
+PstPIDITF.h (c:\´æ´¢\...\piditf_b1):34
+void RTSTPhySimulating();
+void *RTSTPhySim(void *arg);
+void wait_for_end();
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):669
+      RTSTPhySimulating();
+   }
+     
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):677
+void RTSTPhySimulating()
+{
+   int NT;
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):815
+   sprintf(temp,"RTSTPhySimulating Returned!\n");
+   fortran_rtprints_(temp);
+ 
+---- MarkRTCalculation Matches (11 in 2 files) ----
+PstPIDITF.h (c:\´æ´¢\...\piditf_b1):108
+   int MarkRTCalculation; 
+};
+#endif
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):202
+   phyrtio.MarkRTCalculation=SPhyRTIO::MRT_Initializing;
+}
+
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):575
+         DataSendRecv[Nout]=int(phyrtio.MarkRTCalculation+0.5);
+         
+         MPI_Send(DataSendRecv,Nout+1,MPI_DOUBLE_PRECISION,
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):586
+         //      sprintf(temp,"%d \n",(int)phyrtio.MarkRTCalculation);
+         //   else
+         //      sprintf(temp,"%f,",DataSendRecv[k]);
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):672
+   phyrtio.MarkRTCalculation=SPhyRTIO::MRT_End;
+   return NULL;
+}
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):709
+   phyrtio.MarkRTCalculation=SPhyRTIO::MRT_Running;
+   
+   while (TRUE)
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):764
+         DataSendRecv[Nout]=int(phyrtio.MarkRTCalculation+0.5);
+                  
+         MPI_Send(DataSendRecv,Nout+1,MPI_DOUBLE_PRECISION,
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):777
+         //         sprintf(temp,"%d \n",int(phyrtio.MarkRTCalculation));
+         //      else
+         //         sprintf(temp,"%f,",DataSendRecv[k]);
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):843
+   while(SPhyRTIO::MRT_End!=phyrtio.MarkRTCalculation)
+   {
+      usleep(2000);
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):860
+   if (SPhyRTIO::MRT_Running==phyrtio.MarkRTCalculation) { //ÊµÊ±
+      nret=rt_write(hdl,str,nlen);
+   }
+PstPIDItf_rt64.cpp (c:\´æ´¢\...\piditf_b1):898
+      phyrtio.MarkRTCalculation=SPhyRTIO::MRT_Running;
+      sprintf(Sno1,"%d",mpiid.myid+1);
+      // ÆÁÄ»´òÓ¡ÐÅÏ¢

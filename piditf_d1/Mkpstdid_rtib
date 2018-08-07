@@ -1,0 +1,30 @@
+#  2009.3  物理接口的新版本
+Target= pstdid_rt.exe
+SPATH= ./ 
+OPATH= ./release
+
+
+             
+
+CPobjects  = $(OPATH)/pstdid.o \
+                   $(OPATH)/ADPSS_PID_ITF.o \
+                   $(OPATH)/ADPSS_PID.o \
+                   $(OPATH)/ADPSS_PID_AI.o \
+                   $(OPATH)/ADPSS_PID_AO.o \
+                   $(OPATH)/ADPSS_PID_DI.o \
+                   $(OPATH)/ADPSS_PID_DO.o \
+                   $(OPATH)/yjdpsrt.o \
+                   $(OPATH)/rtftoc_intel.o\
+                   $(OPATH)/yjdnet.o
+
+
+Cobjects = $(OPATH)/yjdnet.o  \
+	        
+
+
+
+         
+rcs= 
+
+include Mcif64b1_rtib
+

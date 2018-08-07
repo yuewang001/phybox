@@ -1,0 +1,73 @@
+#
+# windriver parallel computing platform.
+#
+
+withdpdk = yes 
+
+ifeq ($(withdpdk),no)
+        DPDK_FLAG=-I/opt/dpdk-L.1.1.0_27/include
+else
+        DPDK_FLAG=-D_WITH_DPDK -I/opt/dpdk-L.1.1.0_27/include 
+endif
+
+
+LDFLAGS = -melf_x86_64 -pthread  -m64 \
+                  -L/opt/dpdk-L.1.1.0_27/lib \
+                  -static_mpi -Wl,-Map=rtcore.map,--cref \
+                  -Wl,-L/opt/dpdk-L.1.1.0_27/lib \
+                  -Wl,-lethdev -Wl,-lkawela \
+                  -Wl,-lrte_82599_pmd \
+                  -Wl,-lrte_mbuf \
+                  -Wl,-lrte_cmdline \
+                  -Wl,-lrte_timer \
+                  -Wl,-lrte_malloc \
+                  -Wl,--start-group \
+                  -Wl,-lrte_mempool \
+                  -Wl,-lrte_ring \
+                  -Wl,-lrte_hash \
+                  -lm -ldl -lstdc++\
+                  -Wl,-lrte_lpm \
+                  -Wl,-lrte_eal \
+                  -Wl,--end-group
+
+MPIFORT = mpiifort
+MPICC = mpiicc
+MPIICPC = mpiicpc
+
+CFLAG = -DRTSIMU -DLINUX64 -DADPSS_PID_B1 -D_REALTIME $(DPDK_FLAG) -O1 -fpp -fPIC -fpconstant -assume byterecl -align rec4 -module $(OPATH) -I$(SPATH)/include -c
+CCFLAG = -D_REALTIME -D_LINUX $(DPDK_FLAG) -O1 -c
+
+THREAD_SAFE=-parallel
+
+#WITH_DEBUG=-debug
+
+WRAPILIB=-lwrapi \
+         -lrte_fiber 
+
+ifndef Objects
+	Objects := $(Cobjects) $(CPobjects) $(WRAPILIB)
+endif
+
+#ifndef BPAdln
+#  BPAdln := ../../lib/libHVDC_C_SXL_LTP_LIB.a
+#  BPAmdc := ../../lib/libMTDC_LIB_BPA_LTP.a
+#endif
+
+$(Target): $(Objects) 
+	$(MPICC) -o $@ $^ -fPIC -static_mpi $(THREAD_SAFE) $(LDFLAGS)
+	cp $@ /export/run/$(Target)
+CCflag =$(DPDK_FLAG) -fPIC -c -g -D_windriver -DERT=1
+CXXflag=$(DPDK_FLAG) -fPIC -c -g -D_windriver -DERT=1 -DMPICH_IGNORE_CXX_SEEK -std=c++11 -m64 -fPIC
+
+
+OPATH=./release
+SPATH = .
+$(OPATH)/%.o:$(SPATH)/%.c
+	$(MPICC) $(CCflag) $< -o $@
+
+$(OPATH)/%.o:$(SPATH)/%.cpp
+	$(MPIICPC) $(CXXflag) $< -o $@
+
+
+clean:
+	rm -f $(Objects) $(Target)
