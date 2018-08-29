@@ -174,17 +174,24 @@ I32 CADPSS_PID_DO::GetSimuVal(I32 procno,F64 *Vin)
 		//数值类型所需要的变换在这里处理
 		if (a.VSimIO[0].prono==procno)
 		{	//找到
-			data[i]=((U16)Vin[a.VSimIO[0].idxIO])<<15; //需要约定与emt通信的数值格式！！！
 
-			data[i] += (U16)((Vin[a.VSimIO[0].idxIO]-(U16)Vin[a.VSimIO[0].idxIO])*1000000);
+			int ind=a.idno-1;
+			data[ind]=((U16)Vin[a.VSimIO[0].idxIO])<<15; //需要约定与emt通信的数值格式！！！
+
+			data[ind] += (U16)((Vin[a.VSimIO[0].idxIO]-(U16)Vin[a.VSimIO[0].idxIO])*1000000);
 	
 			//DO，低15位，表示在下一同步信号多少us后输出，传送给物理接口箱，最高为代表分和合，低15位代表us数
+
+			if(DEBUG)
+			{
+				fprintf(fdbg,"CADPSS_PID_DO::GetSimuVal: get DO data[%d]=%d",ind,data[ind]);
+			}
 			n++;
 		}
 	}
 	if(INFO)
 	{
-		printf("CADPSS_PID_DO::GetSimuVal: get %d data\n",n);
+		fprintf(fdbg,"CADPSS_PID_DO::GetSimuVal: get %d data\n",n);
 	}
 	return n;
 }

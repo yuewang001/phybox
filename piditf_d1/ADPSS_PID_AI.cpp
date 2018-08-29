@@ -331,7 +331,7 @@ I32 CADPSS_PID_AI::setSimuVal(I32 procno,F64 *Vin)
 		{	//’“µΩ
 			Vin[a.VSimIO[0].idxIO]=a.VSimIO[0].kamplify*Volt[i];
 
-			if(0)
+			if(DEBUG)
 			{
 				fprintf(fdbg, "CADPSS_PID_AI::setSimuVal: Volt[%d]=%d---\n",i,Volt[i]);
 				fprintf(fdbg,"a.VSimIO[0].idxIO=%d  Vin[%d]=%d---\n",a.VSimIO[0].idxIO,a.VSimIO[0].idxIO,Vin[a.VSimIO[0].idxIO]);
