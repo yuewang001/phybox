@@ -130,7 +130,7 @@ I32 CADPSS_PID_AO::addavar(I32 idxio,I32 idno,I32 ProcNo, I32 ValueType,
 	}
 	if(INFO)
 	{
-		fprintf(fdbg, "idxio=%d, varno=%d, slotno=%d, ch=%d, valuetype=%d, NumInstant=%d\n", idxio, VarNo, SlotNo, nChanNo, ValueType, NumInstant);
+		fprintf(fdbg, "procno=%d  idxio=%d, varno=%d, slotno=%d, ch=%d, valuetype=%d, NumInstant=%d\n",ProcNo, idxio, VarNo, SlotNo, nChanNo, ValueType, NumInstant);
 		fprintf(fdbg, "VarInf.size=%d\n", nret);
 	}
 
@@ -154,6 +154,11 @@ I32 CADPSS_PID_AO::allocBuf()
 			fprintf(fdbg, "CADPSS_PID_AO::allocBuf(), fail to allocate buffer, len = %d", n);
 			return 1;
 		}
+	}
+
+	if(DEBUG)
+	{
+		fprintf(fdbg, "CADPSS_PID_AO::allocBuf(), allocat buf size :%d", n);
 	}
 
 	return 0;
@@ -261,7 +266,10 @@ void CADPSS_PID_AO::initInstantPara(F64 dDT,F64 df0, I32 nkIT)
 I32 CADPSS_PID_AO::GetSimuVal(I32 procno,F64 *Vin)
 {
 	if(DEBUG)
-		fprintf(fdbg,"CADPSS_PID_AO::GetSimuVal start\n");
+	{
+		fprintf(fdbg,"CADPSS_PID_AO::GetSimuVal start for procno: %d \n",procno);
+	}
+
 	I32 i,j,n=0;
 
 
@@ -269,22 +277,54 @@ I32 CADPSS_PID_AO::GetSimuVal(I32 procno,F64 *Vin)
 	{
 		fprintf(fdbg,"CADPSS_PID_AO::GetSimuVal VarINf.size=%d\n",VarInf.size());
 	}
+
+
+	if(DEBUG)
+	{
+		fprintf(fdbg,"CADPSS_PID_AO::GetSimuVal print VarInf value------\n");
+		for (i=0; i<VarInf.size(); i++)
+		{
+			ADPSS_PID_IOVAR& b=VarInf[i];
+			for (j=0; j<b.VSimIO.size(); j++)
+			{
+				ADPSS_Simu_IOVAR& a=b.VSimIO[j];
+			   fprintf(fdbg,"CADPSS_PID_AO::GetSimuVal print VarInf value No:%d   prono=%d   VarNo=%d   IdxIO=%d  idno=%d------\n",i,a.prono,a.VarNo,a.idxIO,b.idno);
+			}
+
+		}
+	}
 	for (i=0; i<VarInf.size(); i++)
 	{
 		ADPSS_PID_IOVAR& a=VarInf[i];
 
 		if(DEBUG)
 		{
-			fprintf(fdbg,"CADPSS_PID_AO::GetSimuVal VarInf[%d].VSimIO.size()=%d\n",i,a.VSimIO.size());
+			//fprintf(fdbg,"CADPSS_PID_AO::GetSimuVal VarInf[%d].VSimIO.size()=%d\n",i,a.VSimIO.size());
 		}
 		for (j=0; j<a.VSimIO.size(); j++)
 		{
 			ADPSS_Simu_IOVAR& b=a.VSimIO[j];
+			//Volt[a.idno]=Vin[b.idxIO];
+
+			if(DEBUG)
+			{
+				fprintf(fdbg, "print data: idNo=%d\n",a.idno);
+				fprintf(fdbg, "print data: idxIO=%d\n",b.idxIO);
+				fprintf(fdbg, "print data: varNo=%d\n",b.VarNo);
+				fprintf(fdbg, "print data: prono=%d\n",b.prono);
+
+			}
 			if (b.prono==procno)	//�ҵ�
 			{
-				Volt[i]=Vin[b.idxIO];
+				Volt[a.idno-1]=Vin[b.idxIO];
+				//Volt[i]=Vin[b.idxIO];
 				if(DEBUG)
-					fprintf(fdbg,"CADPSS_PID_AO::GetSimuVal Volt[%d]=%20.15f\n",i,Volt[i]);
+				{
+					fprintf(fdbg, "print data: Volt[%d]=%20.15f\n",a.idno-1,Volt[a.idno-1]);
+					//fprintf(fdbg,"CADPSS_PID_AO::GetSimuVal idno:%d   %20.15f\n",a.idno-1.idno,Vin[b.idxIO]);
+					//fprintf(fdbg,"CADPSS_PID_AO::GetSimuVal Volt[%d]=%20.15f\n",i,Volt[a.idno-1]);
+
+				}
 
 				/*
 				if (ADPSS_PID_IOVAR::Virt2InstVal==a.nValueType)	//˲ʱֵ

@@ -1751,7 +1751,7 @@ static I16 PID_Update_NewData(U16 DeviceId)
 			*/
 
 			fprintf(fdbg,"Send AO data print start(only print first 100, dev->tx_count=%d------\n",dev->tx_count);
-			for(xx=0;xx<dev->ao_data_count && xx<100 ;xx++)
+			for(xx=0;xx<dev->ao_data_count ;xx++)
 			{
 				//printf("PID_Update_NewData: analog data:%d @ offset:value:%d:%f\n",xx,offset,((float*)(ps+offset))[xx]);
 			    //fprintf(fdbg,"PID_Update_NewData: analog data:%d @ offset:value:%d:%20.15f\n",xx,offset,((float*)(ps+offset))[xx]);

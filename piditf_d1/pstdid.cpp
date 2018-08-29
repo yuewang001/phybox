@@ -357,7 +357,8 @@ int RecvSendPhyIO()
 	}
 	//打印
 	fprintf(fdbg,"NumVar:%d\n",NumVar);
-	fputs("Valid,Vidno,ISST,SimProcNo,CompType,CompNo,VarNo,SigType,ValueType,ExIDNo,ChNo,Index,CompName \n",fdbg);
+	fprintf(fdbg,"Valid,Vidno,ISST,SimProcNo,CompType,CompNo,VarNo,SigType,ValueType,ExIDNo,ChNo,Index,CompName \n");
+	//fputs("Valid,Vidno,ISST,SimProcNo,CompType,CompNo,VarNo,SigType,ValueType,ExIDNo,ChNo,Index,CompName \n",fdbg);
 	for (i=0;i<NumVar;i++)
 	{
 		iovars[i].CompName[MaxLen_Name-1]=0;
@@ -368,7 +369,7 @@ int RecvSendPhyIO()
 			k--;
 		}
 
-		fprintf(fdbg,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s \n",
+		fprintf(fdbg,"config data, %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s \n",
 				iovars[i].Valid,iovars[i].Vidno,iovars[i].ISST,iovars[i].SimProcNo,
 				iovars[i].CompType,iovars[i].CompNo,iovars[i].VarNo,iovars[i].SigType,iovars[i].ValueType,
 				iovars[i].PidNo,iovars[i].PidChNo,iovars[i].Index,iovars[i].CompName);
@@ -545,6 +546,15 @@ void DigitalSimulating()
         		}
         	}
             memcpy(&simio.Vin[simio.IdVin[i]],DataSendRecv,Nin*sizeof(double)); 
+
+            if(DEBUG)
+            {
+            	fprintf(fdbg, "Print DataSendRecv value, total size is %d-----------\n",Nin);
+            	for(int i=0; i<Nin;i++)
+            	{
+            		fprintf(fdbg, "Print DataSendRecv value No. %d = %20f\n",i,DataSendRecv[i]);
+            	}
+            }
             //将从机电收到的数据，放到待发送的数据结构中：
             gPIDITF.GetSimuVal(procphy.pcsubnet[i],&simio.Vin[simio.IdVin[i]]);
          }
