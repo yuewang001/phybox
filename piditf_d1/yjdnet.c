@@ -6,17 +6,30 @@
 #include <time.h>
 #include <errno.h>
 #include <pthread.h>
-
+#include "cal_sock.h"
+#include "MSG_SRFunc.h"
+#include "MSG_SRDef.h"
 #include "debug_config.h"
+
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 #define MAX_PACK_LENGTH 4096 
 #define MAX_COUNT 65535
-
+#define DEFAULT_REC_PORT 8001
+#define MAXLINE 4096
 
 
 //#include <gpos_bridge/sys/gpos.h>
 
 extern FILE *fdbg;
+extern FILE *Recfdbg;
 
 struct ctl_pkt {
 	U16 head[2];
@@ -524,13 +537,40 @@ static I16 yjdnet_write(U16 DeviceId, struct dev_buff *dev,U16 DesPortId)
 
 	I32 left_length=length;
 	I32 data_sent=0;
+	int send_length;
 
 	int err=0;
+
+	if(!DPDK_ENABLE)
+	{
+		char CIP[100];
+		int portNO;
+		strcpy(CIP,"127.0.0.1");
+		portNO=8000;
+		int Ierr=1;
+		int iii=0;
+
+		do {
+			Ierr=InitConnection(CIP,portNO);
+			iii=iii+1;
+			fprintf(fdbg,"Connecting to Socket B, try %d\n",iii);
+			sleep(1);
+
+		}while ((Ierr!=0)&&(iii<100));
+
+		if(Ierr!=0)
+		{
+			fprintf(fdbg,"Not able to connectSocket B, bye!\n");
+			return -1;
+		}
+
+	}
+
 	while(current_num <= packet_total_num)
 	{
 
 		if(DEBUG)
-		fprintf(fdbg,"yjdnet_write: current_num=%d\n",current_num);
+			fprintf(fdbg,"yjdnet_write: current_num=%d\n",current_num);
 		memset(datasend,0,lbuff);
 		U16* ps=(U16*) datasend;
 		ps[0]=0x88FB;
@@ -543,15 +583,15 @@ static I16 yjdnet_write(U16 DeviceId, struct dev_buff *dev,U16 DesPortId)
 		swapu16(ps+2);
 
 		if(DEBUG)
-		fprintf(fdbg,"yjdnet_write: left_length:%d,MAX_PACK_LENGTH:%d \n",left_length,MAX_PACK_LENGTH);
-		int send_length=((left_length-MAX_PACK_LENGTH)>0)?MAX_PACK_LENGTH:left_length;
+			fprintf(fdbg,"yjdnet_write: left_length:%d,MAX_PACK_LENGTH:%d \n",left_length,MAX_PACK_LENGTH);
+		send_length=((left_length-MAX_PACK_LENGTH)>0)?MAX_PACK_LENGTH:left_length;
 
 		if(DEBUG)
-		fprintf(fdbg,"yjdnet_write: No. %d packet length:%d\n",current_num,send_length);
+			fprintf(fdbg,"yjdnet_write: No. %d packet length:%d\n",current_num,send_length);
 		left_length-=send_length;
 
 		memcpy(datasend+sizeof(U16)*3,data+data_sent,send_length);
-                usleep(0);//without this line, packet sending will run into packet-loss problem. 
+		usleep(0);//without this line, packet sending will run into packet-loss problem.
 		if(DEBUG_RAW)
 		{
 			int x=0;
@@ -568,7 +608,54 @@ static I16 yjdnet_write(U16 DeviceId, struct dev_buff *dev,U16 DesPortId)
 			fprintf(fdbg,"yjdnet_write: DeviceId:%d, DesPortId:%d\n",DeviceId,DesPortId);
 			fprintf(fdbg,"yjdnet_write:the length sent by dpdk:%d\n",send_length+sizeof(U16)*3);
 		}
-		if(!DEBUG_NO_DPDK)
+
+		if(!DPDK_ENABLE)
+		{
+			/*
+			int Ierr;
+			fprintf(fdbg,"yjdnet_write: send data by socket.\n");
+			//void MsgSend(int Ntype,char* Databuf,int LenData,int* Ierr)
+			//MsgSend(1,datasend,send_length+sizeof(U16)*3,&Ierr);
+
+			int tmp_length=send_length+sizeof(U16)*3;
+
+			fprintf(fdbg,"socket send length:%d\n",tmp_length);
+			fprintf(fdbg,"socket max length:%d\n",Msg_MaxLen);
+
+			char CIP[100];
+			int portNO;
+			strcpy(CIP,"127.0.0.1");
+			portNO=8000;
+			Ierr=1;
+			int iii=0;
+
+			do {
+				Ierr=InitConnection(CIP,portNO);
+				iii=iii+1;
+				fprintf(fdbg,"Connecting to Socket B, try %d\n",iii);
+				sleep(1);
+
+			}while ((Ierr!=0)&&(iii<100));
+
+			if(Ierr!=0)
+			{
+				fprintf(fdbg,"Not able to connectSocket B, bye!\n");
+				return -1;
+			}
+			 */
+
+
+
+			//char* pWrtMsg="hello,you are connected!\n";
+
+			//WriteMessage(pWrtMsg, 40);
+			WriteMessage(datasend,send_length+sizeof(U16)*3);
+
+		}
+
+
+
+		if(DPDK_ENABLE)
 		{
 			if ((err = dpdk_write(DeviceId, datasend, send_length+sizeof(U16)*3)) != 1)
 			{
@@ -631,13 +718,14 @@ static I16 yjdnet_write(U16 DeviceId, struct dev_buff *dev,U16 DesPortId)
 		pmove=data+send_length;
 		current_num++;
 		if(DEBUG)
-		fprintf(fdbg,"yjdnet_write: current_num=%d\n",current_num);
+			fprintf(fdbg,"yjdnet_write: current_num=%d\n",current_num);
 
 
 	}
 
 	free(datasend);
 	datasend=0;
+	fprintf(fdbg,"yjdnet_write: end of send data\n");
 	return err;
 
 }
@@ -709,11 +797,11 @@ void test_get_input_data(U16 DeviceId, struct dev_buff *dev)
 
 	dev->ai_data_count=5;
 	dev->di_data_count=2;
-        dev->ai_data[0]=0.7;
-        dev->ai_data[1]=0.8;
-        dev->ai_data[2]=0.9;
-        dev->ai_data[3]=0.7;
-        dev->ai_data[4]=0.6;
+	dev->ai_data[0]=0.7;
+	dev->ai_data[1]=0.8;
+	dev->ai_data[2]=0.9;
+	dev->ai_data[3]=0.7;
+	dev->ai_data[4]=0.6;
 	dev->di_data[0]=1;
 	dev->di_data[1]=0;
 	//dev->di_data[2]=0;
@@ -824,9 +912,9 @@ I16 get_input_data(U16 DeviceId, struct dev_buff *dev)
 		{
 			if(DEBUG)
 			{
-			fprintf(fdbg,"get_input_data: get current pack:%d\n",pu[2]);
-			fprintf(fdbg,"get_input_data: get current pack in previous :%d\n",current_pack);
-			fprintf(fdbg,"get_input_dat pack sequence is wrong£¡\n");
+				fprintf(fdbg,"get_input_data: get current pack:%d\n",pu[2]);
+				fprintf(fdbg,"get_input_data: get current pack in previous :%d\n",current_pack);
+				fprintf(fdbg,"get_input_dat pack sequence is wrong£¡\n");
 			}
 			free(data_receive);
 			return -1;
@@ -844,7 +932,7 @@ I16 get_input_data(U16 DeviceId, struct dev_buff *dev)
 		int length=pkt_rx->pkt.data_len-8-2;
 
 		if(DEBUG)
-		fprintf(fdbg,"get_input_data: length:%d\n",length);
+			fprintf(fdbg,"get_input_data: length:%d\n",length);
 
 		length=pkt_rx->pkt.data_len-sizeof(U16)*3-8-2;
 
@@ -891,7 +979,7 @@ I16 get_input_data(U16 DeviceId, struct dev_buff *dev)
 				break;
 			}
 		}
-		*/
+		 */
 
 		rte_pktmbuf_free(pkt_rx);
 
@@ -989,7 +1077,7 @@ I16 get_input_data(U16 DeviceId, struct dev_buff *dev)
 	if(xx%INFO_PRINT_INPUT_STEP==1 || DEBUG)
 
 		fprintf(fdbg,"get_input_data: get di_data_count=%d\n",dev->di_data_count);
-    memcpy(dev->di_data,(U8*)(offset+sizeof(U16)),dev->di_data_count*sizeof(U8));
+	memcpy(dev->di_data,(U8*)(offset+sizeof(U16)),dev->di_data_count*sizeof(U8));
 
 	if(DEBUG || xx%INFO_PRINT_STEP==1)
 	{
@@ -1048,6 +1136,84 @@ I16 pid_thread_create()
 }
 
 
+
+static  void*  __rx_socket_server(__attribute__((unused)) void *arg)
+{
+	fprintf(Recfdbg,"start socket listen server !\n");
+	fflush(Recfdbg);
+	int    socket_fd, connect_fd;
+	struct sockaddr_in     servaddr;
+	char    buff[4096];
+	int     n;
+
+	if( (socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1 ){
+		fprintf(Recfdbg,"create socket error: \n");
+		fflush(Recfdbg);
+		fclose(Recfdbg);
+		exit(0);
+	}
+
+	memset(&servaddr, 0, sizeof(servaddr));
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	servaddr.sin_port = htons(DEFAULT_REC_PORT);
+
+
+	if( bind(socket_fd, (struct sockaddr*)&servaddr, sizeof(servaddr)) == -1){
+		sprintf(Recfdbg,"bind socket error: (errno: )\n");
+		fflush(Recfdbg);
+		fclose(Recfdbg);
+		exit(0);
+	}
+
+	if( listen(socket_fd, 10) == -1){
+		fprintf(Recfdbg,"listen socket error: (errno: )\n");
+		fflush(Recfdbg);
+		fclose(Recfdbg);
+		exit(0);
+	}
+	fprintf(Recfdbg,"======waiting for client's request======\n");
+	while(1){
+
+		if( (connect_fd = accept(socket_fd, (struct sockaddr*)NULL, NULL)) == -1){
+			fprintf(Recfdbg,"accept socket error: (errno: )");
+			continue;
+		}
+
+		n = recv(connect_fd, buff, MAXLINE, 0);
+
+		if(send(connect_fd, "Hello,you are connected!\n", 26,0) == -1)
+		{
+			perror("send error");
+			close(connect_fd);
+			fflush(Recfdbg);
+			fclose(Recfdbg);
+			exit(0);
+		}
+
+		buff[n] = '\0';
+		fprintf(Recfdbg,"recv msg from client: %s\n", buff);
+		fflush(Recfdbg);
+		fclose(Recfdbg);
+
+	}
+	fflush(Recfdbg);
+	fclose(Recfdbg);
+	close(socket_fd);
+
+}
+
+
+int pid;
+I16 pid_thread_create_socket()
+{
+
+	printf("pid_thread_create_socket: to create a thread!\n:");
+	int corenum;
+	pthread_create(&pid, NULL, __rx_socket_server, &corenum);
+
+	return 0;
+}
 unsigned long long t3,t4;
 
 static void *__gpsTimer_event(__attribute__((unused)) void *arg)
@@ -1513,7 +1679,7 @@ static I16 PID_AI_VoltScale(float *Data, F64 *Slp, F64 *Itcp, F64 *Volt, U16 Cou
 static I16 PID_AO_VoltScale(F64 *Volt, F64 *Slp, F64 *Itcp, float *Data, U16 Count)
 {
 	if(DEBUG)
-	fprintf(fdbg, "PID_AO_VoltScale: start\n");
+		fprintf(fdbg, "PID_AO_VoltScale: start\n");
 	int i, tmp;
 
 	if (!Data || !Slp || !Itcp || !Volt)
@@ -1564,7 +1730,7 @@ static int max_us_markinput_count;
 static I16 PID_MarkInput_Wait(U16 DeviceId, U16 Timeout)
 {
 	if(DEBUG)
-	fprintf(fdbg,"PID_MarkInput_Wait: start---\n");
+		fprintf(fdbg,"PID_MarkInput_Wait: start---\n");
 	struct dev_buff *dev;
 	I16 tmp;
 
@@ -1582,21 +1748,21 @@ static I16 PID_MarkInput_Wait(U16 DeviceId, U16 Timeout)
 
 	 */
 	if(DEBUG)
-	fprintf(fdbg,"PID_MarkInput_Wait: dev-updates value:%d---\n",dev->updates);
+		fprintf(fdbg,"PID_MarkInput_Wait: dev-updates value:%d---\n",dev->updates);
 	tmp = dev->updates;
 	if (tmp) {
 		if(DEBUG)
-		fprintf(fdbg,"PID_MarkInput_Wait: to lock datalock\n");
+			fprintf(fdbg,"PID_MarkInput_Wait: to lock datalock\n");
 		pthread_spin_lock(&dev->datalock);
 		dev->updates = 0;
 		pthread_spin_unlock(&dev->datalock);
 		if(DEBUG)
-		fprintf(fdbg,"PID_MarkInput_Wait:unlock datalock done...\n");
+			fprintf(fdbg,"PID_MarkInput_Wait:unlock datalock done...\n");
 	}
 
 	int xx=dev->tx_count;
 	if(xx%INFO_PRINT_STEP==1)
-	fprintf(fdbg,"NET%d updates=%d times=%d \n",DeviceId,tmp,dev->tx_count);
+		fprintf(fdbg,"NET%d updates=%d times=%d \n",DeviceId,tmp,dev->tx_count);
 	if(tmp>1)
 		fprintf(fdbg,"NET%d updates=%d times=%d \n",DeviceId,tmp,dev->tx_count);
 	if (dev->mode == MODE_SEM)
@@ -1614,11 +1780,11 @@ static I16 PID_MarkInput_Wait(U16 DeviceId, U16 Timeout)
 
 static I16 PID_Update_NewData(U16 DeviceId)
 {
-	   char str_dbg[8192];
-	   //sprintf(str_dbg,"PID_Update_NewData starts::\n");
-	   //fputs(str_dbg,fdbg);
-	   //fputs(str_dbg,stdout);
-	   //fflush(fdbg);
+	char str_dbg[8192];
+	//sprintf(str_dbg,"PID_Update_NewData starts::\n");
+	//fputs(str_dbg,fdbg);
+	//fputs(str_dbg,stdout);
+	//fflush(fdbg);
 
 
 	//printf("PID_Update_NewData function start:\n");
@@ -1694,10 +1860,10 @@ static I16 PID_Update_NewData(U16 DeviceId)
 	int xx=dev->tx_count;
 	if(xx%INFO_PRINT_STEP==1 ||DEBUG )
 	{
-	fprintf(fdbg,"PID_Update_NewData: ao data size:%d\n",dev->ao_data_count);
+		fprintf(fdbg,"PID_Update_NewData: ao data size:%d\n",dev->ao_data_count);
 
-	//printf("PID_Update_NewData: do data size:%d\n",dev->do_data_count);
-	fprintf(fdbg,"PID_Update_NewData: do data size:%d\n",dev->do_data_count);
+		//printf("PID_Update_NewData: do data size:%d\n",dev->do_data_count);
+		fprintf(fdbg,"PID_Update_NewData: do data size:%d\n",dev->do_data_count);
 
 	}
 
@@ -1748,15 +1914,15 @@ static I16 PID_Update_NewData(U16 DeviceId)
 				step=100;
 			else if(dev->ao_data_count>10)
 				step=10;
-			*/
+			 */
 
 			fprintf(fdbg,"Send AO data print start(only print first 100, dev->tx_count=%d------\n",dev->tx_count);
 			for(xx=0;xx<dev->ao_data_count ;xx++)
 			{
 				//printf("PID_Update_NewData: analog data:%d @ offset:value:%d:%f\n",xx,offset,((float*)(ps+offset))[xx]);
-			    //fprintf(fdbg,"PID_Update_NewData: analog data:%d @ offset:value:%d:%20.15f\n",xx,offset,((float*)(ps+offset))[xx]);
-			    //fprintf(fdbg,"PID_Update_NewData: dev->ao_data:%d @ offset:value:%d:%20.15f\n",xx,offset,dev->ao_data[xx]);
-			    fprintf(fdbg,"Send AO data No:%d  value:%20.15f\n",xx+1,dev->ao_data[xx]);
+				//fprintf(fdbg,"PID_Update_NewData: analog data:%d @ offset:value:%d:%20.15f\n",xx,offset,((float*)(ps+offset))[xx]);
+				//fprintf(fdbg,"PID_Update_NewData: dev->ao_data:%d @ offset:value:%d:%20.15f\n",xx,offset,dev->ao_data[xx]);
+				fprintf(fdbg,"Send AO data No:%d  value:%20.15f\n",xx+1,dev->ao_data[xx]);
 
 			}
 			fprintf(fdbg,"Send AO data No:%d  value:%20.15f\n",dev->ao_data_count,dev->ao_data[dev->ao_data_count-1]);
@@ -1769,7 +1935,7 @@ static I16 PID_Update_NewData(U16 DeviceId)
 				sprintf(str_dbg,"%02x ",*(ps+i));
 			sprintf(str_dbg,"\n");
 			fputs(str_dbg,fdbg);
-			*/
+			 */
 
 		}
 		int x=0;

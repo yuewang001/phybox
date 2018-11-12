@@ -11,13 +11,15 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
-
+#include <unistd.h>
 #include "rtftoc_intel.h"
 
 #include "debug_config.h"
 
-#define RT_ENABLE  0
-#define TCP_ENABLE  1
+#include "cal_sock.h"
+#include "MSG_SRFunc.h"
+#include "MSG_SRDef.h"
+
 
 //MPI标识
 struct SMPIID mpiid;
@@ -25,6 +27,7 @@ struct SMPIID mpiid;
 struct SPROCPHY procphy;
 // 输出文件
 FILE * fdbg;
+FILE * Recfdbg;
 
 //实时相关
 struct SPhyRTIO phyrtio;
@@ -80,6 +83,14 @@ int main(int argc,char * argv[])
       printf("Fail to open file %s",fname);
       return 1;
    }
+
+   char* cRfdbg="interface_receive.log";
+   Recfdbg=fopen(cRfdbg,"w");
+   if (NULL==Recfdbg) {
+      printf("Fail to open file %s",fname);
+      return 1;
+   }
+
    sprintf(str_dbg,"PhyST Process %d of %d start to run...\n",
                mpiid.myid, mpiid.numprocs);
    fputs(str_dbg,fdbg);
@@ -105,6 +116,7 @@ int main(int argc,char * argv[])
    //设置最小PID进程的最小序号接口箱为主控
    //if(mpiid.myid==mpiid.minPIDProc)
    //if(mpiid.myid==mpiid.numprocs-1)
+   if(DPDK_ENABLE==1)
    {
 	  printf("mpiid.myid=%d,mpiid.numprocs=%d \n ",mpiid.myid,mpiid.numprocs);
       //gPIDITF.setMaster();
@@ -119,6 +131,36 @@ int main(int argc,char * argv[])
       printf("mpiid.myid:%d:dpdk init done!\n",mpiid.myid);
 
    }
+   else    //socket
+   {
+	   printf("mpiid.myid=%d,mpiid.numprocs=%d \n ",mpiid.myid,mpiid.numprocs);
+	   printf("socket to be initialized!\n");
+	   char CIP[100];
+	   int portNO;
+	   strcpy(CIP,"127.0.0.1");
+	   portNO=8000;
+		int Ierr=1;
+		int iii=0;
+		do {
+			Ierr=InitConnection(CIP,portNO);
+			iii=iii+1;
+			printf("Connecting to Socket B, try %d\n",iii);
+			sleep(1);
+
+		}while ((Ierr!=0)&&(iii<100));
+
+		if(Ierr!=0)
+		{
+			printf("Not able to connect to Socket link, so have to exit!\n");
+		    exit(-1);
+   	    }
+   }
+
+   char* pWrtMsg="hello,you are connected!\n";
+   char* pWrtMsg2="hello,I am who!\n";
+
+   WriteMessage(pWrtMsg, 40);
+   WriteMessage(pWrtMsg2, 40);
 
    //从主控接受IO信息，设置接口内容，向子网发送与相关的IO变量
 
@@ -189,9 +231,14 @@ LabelEND:
    
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
-   fclose(fdbg);   
+   fclose(fdbg);
+   fclose(Recfdbg);
 
-   dpdk_release();
+   if(DPDK_ENABLE)
+   {
+	   dpdk_release();
+   }
+
    gPIDITF.finalize();
    return 0;
 }

@@ -158,6 +158,7 @@ I16 PID_Update_NewData(U16 DeviceId);
 
 I16 PID_Sem_Init(U16 DeviceId);
 I16 pid_thread_create();
+I16 pid_thread_create_socket();
 I16 gpsTimer_thread_create();
 I16 getSignal_NextDT(double *_global_us_t,double *_global_us_g,double DT);
 I16 wait_PPS_signal();

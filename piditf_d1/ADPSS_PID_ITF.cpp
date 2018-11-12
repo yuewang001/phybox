@@ -2,6 +2,7 @@
 #include "ADPSS_PID_ITF.h"
 #include "rtftoc_intel.h"
 #include "yjdnet.h"
+#include "debug_config.h"
 
 
 extern FILE* fdbg;
@@ -89,7 +90,17 @@ I32 CADPSS_PID_ITF::init(F64 SyncDT)
 {
 	I32 i, nret=-1;
 
-	nret = pid_thread_create();
+	if(DPDK_ENABLE)
+	{
+	    nret = pid_thread_create();
+	}
+	else
+	{
+		fprintf(fdbg," CADPSS_PID_ITF::to call pid_thread_create_socket\n");
+		nret= pid_thread_create_socket();
+	}
+
+
 
 	if(nret<0) return -1;
 

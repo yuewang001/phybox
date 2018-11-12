@@ -1,6 +1,7 @@
 #ifndef _DEBUG_CONFIG_H
 #define _DEBUG_CONFIG_H
 
+//for debug
 #define INFO  1
 #define DEBUG 1
 #define DEBUG_REC 0  //with it open, logic will change. 
@@ -14,5 +15,10 @@
 #define INFO_PRINT_STEP 1000
 #define INFO_PRINT_INPUT_STEP 10
 
+
+
+#define DPDK_ENABLE  0  //socket is enable
+#define RT_ENABLE  0
+#define TCP_ENABLE  1
 
 #endif

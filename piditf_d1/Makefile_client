@@ -1,0 +1,62 @@
+#
+# windriver parallel computing platform.
+#
+
+SPATH= .
+OPATH= ./release
+
+targets  = $(OPATH)/client_main.o \
+		   $(OPATH)/cal_sock.o \
+		   
+
+#LDFLAGS = -melf_x86_64 -pthread  -m64 \
+                  -static_mpi -Wl,-Map=rtcore.map,--cref \
+                  -Wl,-lethdev -Wl,-lkawela \
+                  -Wl,-lrte_82599_pmd \
+                  -Wl,-lrte_mbuf \
+                  -Wl,-lrte_cmdline \
+                  -Wl,-lrte_timer \
+                  -Wl,-lrte_malloc \
+                  -Wl,--start-group \
+                  -Wl,-lrte_mempool \
+                  -Wl,-lrte_ring \
+                  -Wl,-lrte_hash \
+                  -lm -ldl -lstdc++\
+                  -Wl,-lrte_lpm \
+                  -Wl,-lrte_eal \
+                  -Wl,--end-group
+                  
+CCflag =  -fPIC -c -g  -DERT=1
+CXXflag=  -fPIC -c -g  -DERT=1 -DMPICH_IGNORE_CXX_SEEK  -m64 -fPIC
+
+ALL = socket_client.exe
+
+MPICC = g++
+MPIICPC = g++
+
+
+#WRAPILIB=-lwrapi \
+	-lrte_fiber
+
+all : $(ALL)
+
+objects = $(targets) $(WRAPILIB)
+
+$(ALL): $(objects)
+	mkdir -p release
+	$(MPICC) -o $@ $^ -fPIC   $(LDFLAGS)
+	#cp $@ /export/run/pstdid.exe
+  
+$(OPATH)/%.o:$(SPATH)/%.c
+	mkdir -p release
+	$(MPICC) $(CCflag) $< -o $@
+	
+$(OPATH)/%.o:$(SPATH)/%.cpp
+	mkdir -p release 
+	$(MPIICPC) $(CXXflag) $< -o $@
+	
+	
+clean:
+	@rm -f $(ALL)  *.o *.map log 
+	@rm -rf release/*
+
