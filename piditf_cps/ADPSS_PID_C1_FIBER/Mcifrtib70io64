@@ -1,0 +1,127 @@
+#
+# windriver parallel computing platform.
+#
+
+withdpdk = yes
+
+ifeq ($(withdpdk),no)
+        DPDK_FLAG=-I/opt/dpdk/x86_64-native-linuxapp-gcc/include
+else
+        DPDK_FLAG=-D_WITH_DPDK -I/opt/dpdk/x86_64-native-linuxapp-gcc/include 
+endif
+
+LDFLAGS = -melf_x86_64 -pthread  -m64 \
+                  -L/opt/dpdk/x86_64-native-linuxapp-gcc/lib \
+                  -static_mpi -Wl,-Map=rtcore.map,--cref \
+                  -Wl,-L/opt/dpdk/x86_64-native-linuxapp-gcc/lib \
+                  -Wl,-lethdev \
+                  -Wl,-lrte_mbuf \
+                  -Wl,-lrte_cmdline \
+                  -Wl,-lrte_timer \
+                  -Wl,-lrte_malloc \
+                  -Wl,--start-group \
+                  -Wl,-lrte_mempool \
+                  -Wl,-lrte_ring \
+                  -Wl,-lrte_hash \
+                  -lm -ldl -lstdc++\
+                  -Wl,-lrte_lpm \
+                  -Wl,-lrte_eal \
+                  -Wl,--end-group
+MUQLIBPATH = -I/opt/intel/mkl/include \
+					   -L/opt/intel/mkl/lib/intel64 \
+					   -L/opt/intel/lib/intel64           
+
+ifndef icc
+	icc = /opt/intel/compilers_and_libraries_2017.4.196/linux/mpi/intel64/bin/mpiicc
+#	icc = /opt/intel/composer_xe_2013_sp1.2.144/bin/intel64/icc
+#	icc = gcc
+endif
+
+ifndef cflag
+#	cflag= -D_LINUX -c -O2 -std=c99 -fpconstant -assume byterecl -fpp -I../include -align -module $(OPATH)
+#FPGA
+	cflag= -Wall -g -O1 -rdynamic -D_LINUX -D_WSHIOTEST -D_WSHOPTIMIZE -D_PARALLEL -D_MuQ -D_MPIFIFO -D_REALTIME  -D_MuQ_FPGA_RT -D_MuQ_DEB -D_Big_endian -D_MuQ_PHY -D_NANCHECK -D_LARGE_R_PARALLEL -D_SimultEvent -D_InerpMth1 -D_INSTSOLV -D_InerpMth2 -D_InerpMth3 -D_InerpMth4 -D_InerpMth5 -D_InerpMth6  $(DPDK_FLAG) -TP -c -I$(SPATH)/UDModel -I../include -D_windriver -DERT=1 $(OPATH)
+#C_Debug
+#	cflag= -Wall -g -O1 -rdynamic -D_LINUX -D_WSHIOTEST -D_WSHOPTIMIZE -D_PARALLEL -D_MuQ -D_MPIFIFO -D_Headtest -D_C_DEBUG -D_MuQ_DEB -D_Big_endian -D_MuQ_PHY -D_NANCHECK -D_LARGE_R_PARALLEL -D_SimultEvent -D_InerpMth1 -D_INSTSOLV -D_InerpMth2 -D_InerpMth3 -D_InerpMth4 -D_InerpMth5 -D_InerpMth6 $(DPDK_FLAG) -TP -c -I$(SPATH)/UDModel -I../include -D_windriver -DERT=1 $(OPATH)
+#ModelSim
+#	cflag= -Wall -g -O1 -rdynamic -D_LINUX -D_WSHIOTEST -D_WSHOPTIMIZE -D_PARALLEL -D_MuQ -D_MPIFIFO -D_Headtest -D_C_DEBUG -D_MuQ_DEB -D_Big_endian -D_MuQ_PHY -D_NANCHECK -D_LARGE_R_PARALLEL -D_SimultEvent -D_InerpMth1 -D_INSTSOLV -D_InerpMth2 -D_InerpMth3 -D_InerpMth4 -D_InerpMth5 -D_InerpMth6 $(DPDK_FLAG) -TP -c -I$(SPATH)/UDModel -I../include -D_windriver -DERT=1 $(OPATH)
+endif
+
+ifndef Ccflag
+#	Ccflag= -D_LINUX -Wall -O2 -TP -c -I$(SPATH)/UDModel -I../include
+#FPGA
+	Ccflag= -Wall -g -O1 -rdynamic -D_LINUX -D_PARALLEL -D_MuQ -D_MPIFIFO -D_REALTIME  -D_MuQ_FPGA_RT -D_MuQ_DEB -D_Big_endian -D_MuQ_PHY -D_NANCHECK -D_LARGE_R_PARALLEL  -D_SimultEvent -D_InerpMth1 -D_INSTSOLV -D_InerpMth2 -D_InerpMth3 -D_InerpMth4 -D_InerpMth5 -D_InerpMth6  $(DPDK_FLAG) -TP -c -I$(SPATH)/UDModel -I../include -I$(SPATH)/MPIFifo -D_windriver -DERT=1 $(OPATH)
+#C_Debug
+#	Ccflag= -Wall -g -O1 -rdynamic -D_LINUX -D_PARALLEL -D_MuQ -D_MPIFIFO -D_Headtest -D_C_DEBUG -D_MuQ_DEB -D_Big_endian -D_MuQ_PHY -D_NANCHECK -D_LARGE_R_PARALLEL  -D_SimultEvent -D_InerpMth1 -D_INSTSOLV -D_InerpMth2 -D_InerpMth3 -D_InerpMth4 -D_InerpMth5 -D_InerpMth6  $(DPDK_FLAG) -TP -c -I$(SPATH)/UDModel -I../include -I$(SPATH)/MPIFifo -D_windriver -DERT=1 $(OPATH)
+#ModelSim
+#	Ccflag= -Wall -g -O1 -rdynamic -D_LINUX -D_PARALLEL -D_MuQ -D_MPIFIFO -D_Headtest -D_C_DEBUG -D_MuQ_DEB -D_Big_endian -D_MuQ_PHY -D_NANCHECK -D_LARGE_R_PARALLEL  -D_SimultEvent -D_InerpMth1 -D_INSTSOLV -D_InerpMth2 -D_InerpMth3 -D_InerpMth4 -D_InerpMth5 -D_InerpMth6  $(DPDK_FLAG) -TP -c -I$(SPATH)/UDModel -I../include -I$(SPATH)/MPIFifo -D_windriver -DERT=1 $(OPATH)
+endif
+
+ifndef C99flag
+#	C99flag= -D_LINUX -Wall -O2 -TP -c -I$(SPATH)/UDModel -I../include
+#FPGA
+	C99flag= -Wall -g -O1 -rdynamic -D_LINUX -D_PARALLEL -D_MuQ -D_MPIFIFO -D_REALTIME  -D_MuQ_FPGA_RT -D_MuQ_DEB -D_Big_endian -D_MuQ_PHY -D_NANCHECK -D_LARGE_R_PARALLEL  -D_SimultEvent -D_InerpMth1 -D_INSTSOLV -D_InerpMth2 -D_InerpMth3 -D_InerpMth4 -D_InerpMth5 -D_InerpMth6  $(DPDK_FLAG) -std=c99 -TP -c -I$(SPATH)/UDModel -I../include -D_windriver -DERT=1 $(OPATH)
+#C_Debug
+#	C99flag= -Wall -g -O1 -rdynamic -D_LINUX -D_PARALLEL -D_MuQ -D_MPIFIFO -D_Headtest -D_MuQ_DEB -D_C_DEBUG -D_Big_endian -D_MuQ_PHY -D_NANCHECK -D_LARGE_R_PARALLEL  -D_SimultEvent -D_InerpMth1 -D_INSTSOLV -D_InerpMth2 -D_InerpMth3 -D_InerpMth4 -D_InerpMth5 -D_InerpMth6  $(DPDK_FLAG) -std=c99 -TP -c -I$(SPATH)/UDModel -I../include -D_windriver -DERT=1 $(OPATH)
+#ModelSim
+#	C99flag= -Wall -g -O1 -rdynamic -D_LINUX -D_PARALLEL -D_MuQ -D_MPIFIFO -D_Headtest -D_MuQ_DEB -D_C_DEBUG -D_Big_endian -D_MuQ_PHY -D_NANCHECK -D_LARGE_R_PARALLEL  -D_SimultEvent -D_InerpMth1 -D_INSTSOLV -D_InerpMth2 -D_InerpMth3 -D_InerpMth4 -D_InerpMth5 -D_InerpMth6  $(DPDK_FLAG) -std=c99 -TP -c -I$(SPATH)/UDModel -I../include -D_windriver -DERT=1 $(OPATH)
+endif
+
+ifndef lflag
+#	lflag= -align -O2 -lstdc++
+	lflag= -align -lstdc++
+endif
+
+
+THREAD_SAFE=-parallel
+
+#WITH_DEBUG=-debug
+
+WRAPILIB=-lwrapi
+MUQLIB = -lmkl_intel_lp64 \
+				 -lmkl_intel_thread \
+				 -liomp5 \
+				 -lmkl_core
+
+ifndef Objects
+	Objects := $(Cobjects) $(C99objects) $(CPobjects) $(WRAPILIB)
+endif
+
+$(Target): $(Objects) 
+	${icc} $(Objects) $(WITH_DEBUG) -fPIC -static_mpi $(lflag) $(THREAD_SAFE) $(MUQLIBPATH) $(MUQLIB) $(LDFLAGS) -o $(OPATH)/$(Target)
+	cp $(OPATH)/$(Target) /export/run/$(Target)
+
+$(Cobjects):$(OPATH)/%.o:$(SPATH)/%.c
+	${icc} $(cflag) -fPIC $< -o $@
+	
+$(C99objects):$(OPATH)/%.o:$(SPATH)/%.c
+	${icc} $(C99flag) -fPIC $< -o $@
+
+$(CPobjects):$(OPATH)/%.o:$(SPATH)/%.cpp
+	${icc} $(Ccflag) -fPIC $< -o $@
+
+ca:
+	rm -f $(Objects) $(Target)
+
+cf77:
+	rm -f $(F77objects)
+
+cf90:
+	rm -f $(F90objects)
+
+cm77:
+	rm -f $(M77objects)
+
+cm90:
+	rm -f $(M90objects)
+
+ce:
+	rm -f $(Target)
+
+cc:
+	rm -f $(Cobjects)
+
+cr:
+	rm -f $(rcs)
+
+r : ce $(Target)

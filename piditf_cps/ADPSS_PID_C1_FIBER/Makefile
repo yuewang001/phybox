@@ -1,0 +1,76 @@
+#
+# windriver parallel computing platform.
+#
+
+SPATH= .
+OPATH= ./release
+
+targets  = $(OPATH)/ADPSS_PID_MAIN.o \
+		   $(OPATH)/ADPSS_PID_ITF.o \
+		   $(OPATH)/ADPSS_PID.o \
+		   $(OPATH)/ADPSS_PID_AI.o \
+		   $(OPATH)/ADPSS_PID_AO.o \
+		   $(OPATH)/ADPSS_PID_DI.o \
+		   $(OPATH)/ADPSS_PID_DO.o \
+		   $(OPATH)/rtftoc_intel.o \
+		   $(OPATH)/ParseStringSTL.o \
+		   $(OPATH)/yjdnet.o\
+		   $(OPATH)/yjdpsrt.o
+		   
+ifeq ($(withdpdk),no)
+	DPDK_FLAG=-I/opt/dpdk/x86_64-native-linuxapp-gcc/include 
+else
+	DPDK_FLAG=-D_WITH_DPDK -I/opt/dpdk/x86_64-native-linuxapp-gcc/include
+endif
+
+LDFLAGS = -melf_x86_64 -pthread  -m64 \
+                  -L/opt/dpdk/x86_64-native-linuxapp-gcc/lib \
+                  -static_mpi -Wl,-Map=rtcore.map,--cref \
+                  -Wl,-L/opt/dpdk-L.1.1.0_27/lib \
+                  -Wl,-lethdev \
+                  -Wl,-lrte_mbuf \
+                  -Wl,-lrte_cmdline \
+                  -Wl,-lrte_timer \
+                  -Wl,-lrte_malloc \
+                  -Wl,--start-group \
+                  -Wl,-lrte_mempool \
+                  -Wl,-lrte_ring \
+                  -Wl,-lrte_hash \
+                  -lm -ldl -lstdc++\
+                  -Wl,-lrte_lpm \
+                  -Wl,-lrte_eal \
+                  -Wl,--end-group
+                  
+CCflag =$(DPDK_FLAG) -fPIC -c -g -D_windriver -DERT=1
+CXXflag=$(DPDK_FLAG) -fPIC -c -g -D_windriver -DERT=1 -DMPICH_IGNORE_CXX_SEEK -std=c++11 -m64 -fPIC
+
+ALL = pid_emt_rt.exe
+
+MPICC = mpiicc
+MPIICPC = mpiicpc
+
+THREAD_SAFE=-parallel
+
+WRAPILIB=-lwrapi 
+#WRAPILIB=-lwrapi \
+	-lrte_fiber
+
+all : $(ALL)
+
+objects = $(targets) $(WRAPILIB)
+
+$(ALL): $(objects)
+	$(MPICC) -o $@ $^ -fPIC -static_mpi $(THREAD_SAFE) $(LDFLAGS)
+	cp $@ /export/run/
+  
+$(OPATH)/%.o:$(SPATH)/%.c
+	$(MPICC) $(CCflag) $< -o $@
+	
+$(OPATH)/%.o:$(SPATH)/%.cpp
+	$(MPIICPC) $(CXXflag) $< -o $@
+	
+	
+clean:
+	@rm -f $(ALL)  *.o *.map log 
+	@rm -rf release/*
+

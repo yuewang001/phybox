@@ -1,0 +1,165 @@
+#used to make CPS interface 2018/11/20
+OPATH= release
+SPATH= ./
+Target= emt_cps.exe
+
+
+CPobjects  = $(OPATH)/ADPSS_PID_MAIN.o \
+		   $(OPATH)/ADPSS_PID_ITF.o \
+		   $(OPATH)/ADPSS_PID.o \
+		   $(OPATH)/ADPSS_PID_AI.o \
+		   $(OPATH)/ADPSS_PID_AO.o \
+		   $(OPATH)/ADPSS_PID_DI.o \
+		   $(OPATH)/ADPSS_PID_DO.o \
+		   $(OPATH)/ParseStringSTL.o 
+		   
+		   
+Cobjects =  $(OPATH)/rtftoc_intel.o \
+	         $(OPATH)/yjdnet.o\
+		     $(OPATH)/yjdpsrt.o
+		   
+#CPobjects = $(OPATH)/FG_Interface.o \
+	$(OPATH)/FG_STS.o \
+	$(OPATH)/FPGA/FPGA_Comm_Proxy.o \
+	$(OPATH)/FPGA/NetworkCoding.o \
+	$(OPATH)/MMC/DC_MMCARM.o \
+	$(OPATH)/MMC/DC_MMCGrid.o \
+	$(OPATH)/MMC/DC_MMCInterface.o \
+	$(OPATH)/MMC/DC_MMCs.o \
+	$(OPATH)/MMC/DC_MMCSM.o \
+	$(OPATH)/MMC/DC_MMCValveC.o \
+	$(OPATH)/DC_PWMP.o \
+	$(OPATH)/DC_B6.o \
+	$(OPATH)/DC_HC.o \
+	$(OPATH)/MPIFifo/FifoBase.o \
+	$(OPATH)/MPIFifo/FifoMsgLog.o \
+	$(OPATH)/MPIFifo/MPIFifoBase.o \
+	$(OPATH)/MPIFifo/mpififoCitf.o \
+	$(OPATH)/MPIFifo/MPIFifoCtrl.o \
+	$(OPATH)/MPIFifo/MPIFifoFile.o \
+	$(OPATH)/MPIFifo/MPIFifoSocket.o \
+	$(OPATH)/ComSocket.o \
+	$(OPATH)/BatchFault.o \
+	$(OPATH)/MSG_SR.o \
+	$(OPATH)/EMTIO.o \
+	$(OPATH)/MPI_Comm.o \
+	$(OPATH)/mpififo.o \
+	$(OPATH)/sim_data_conv/simvinfo_to_addr.o \
+	$(OPATH)/UDModel/ParseStringSTL.o \
+	$(OPATH)/Pub_DLY.o \
+	$(OPATH)/Comm_Card.o \
+	$(OPATH)/Parallel_Unifycomm.o \
+	$(OPATH)/FDL.o \
+	$(OPATH)/UDModel/PModelFUNC.o \
+	$(OPATH)/UDModel/UDAlgebraFUNC.o \
+	$(OPATH)/UDModel/UDBaseFunc.o \
+	$(OPATH)/UDModel/UDBasicFUNC.o \
+	$(OPATH)/UDModel/UDFileInputs.o \
+	$(OPATH)/UDModel/UDInterface.o \
+	$(OPATH)/UDModel/UDLogicFUNC.o \
+	$(OPATH)/UDModel/UDModel.o \
+	$(OPATH)/UDModel/UDModels.o \
+	$(OPATH)/UDModel/UDMStrongNode.o \
+	$(OPATH)/UDModel/UDOtherFUNC.o \
+	$(OPATH)/UDModel/UDSignalFUNC.o \
+	$(OPATH)/UDModel/UDTerminal.o \
+	$(OPATH)/UDModel/UDTransferFUNC.o \
+	$(OPATH)/UDModel/UDUserLibFUNC.o \
+	$(OPATH)/UDModel/DLYQueue.o \
+	$(OPATH)/UDModel/UD_FUNCTION.o
+
+#C99objects = $(OPATH)/Br_1PCtrR.o \
+	$(OPATH)/Br_3PLoad.o \
+	$(OPATH)/Ln_1PDistrib.o \
+	$(OPATH)/Ln_3PDistrib.o \
+	$(OPATH)/Ln_NPRLcoup.o \
+	$(OPATH)/Ma_ASM.o \
+	$(OPATH)/Ma_AVR1.o \
+	$(OPATH)/Ma_AVR2.o \
+	$(OPATH)/Ma_AVR310.o \
+	$(OPATH)/Ma_AVR1112.o \
+	$(OPATH)/Ma_AVR13.o \
+	$(OPATH)/Ma_AVR14.o \
+	$(OPATH)/Ma_GOVPub.o \
+	$(OPATH)/Ma_GOV1.o \
+	$(OPATH)/Ma_GOV3.o \
+	$(OPATH)/Ma_GOV4.o \
+	$(OPATH)/Ma_GOV7.o \
+	$(OPATH)/Ma_GOV9.o \
+	$(OPATH)/Ma_ParkG.o \
+	$(OPATH)/Ma_PSSPub.o \
+	$(OPATH)/Ma_PSS1.o \
+	$(OPATH)/Ma_PSS2.o \
+	$(OPATH)/Ma_PSS3.o \
+	$(OPATH)/Ma_PSS4.o \
+	$(OPATH)/Ma_PSS5.o \
+	$(OPATH)/Ma_PSS8.o \
+	$(OPATH)/Parallel_BasFunc.o \
+	$(OPATH)/Parallel_BasFunc2.o \
+	$(OPATH)/Parallel_BasFunc3.o \
+	$(OPATH)/Parallel_BasFunc4.o \
+	$(OPATH)/Parallel_BasFunc7.o \
+	$(OPATH)/Parallel_STFunc.o \
+	$(OPATH)/Parallel_STFunc2.o \
+	$(OPATH)/Parallel_STFunc_init.o \
+	$(OPATH)/Pub_BrLn.o \
+	$(OPATH)/Br_1PRLC.o \
+	$(OPATH)/Br_3PRLC.o \
+	$(OPATH)/PMF_InterpAlg.o \
+	$(OPATH)/LE_SymFullMat.o \
+	$(OPATH)/LE_SymSprsMat.o \
+	$(OPATH)/Ln_3PCcoup.o \
+	$(OPATH)/Ln_3PRLcoup.o \
+	$(OPATH)/main.o \
+	$(OPATH)/PMF_Node.o \
+	$(OPATH)/PMF_Out.o \
+	$(OPATH)/PE_Brk.o \
+	$(OPATH)/PE_BrkAction.o \
+	$(OPATH)/PE_BrkCmpsnt.o \
+	$(OPATH)/PE_BrkInterp.o \
+	$(OPATH)/PE_BrkRstMat.o \
+	$(OPATH)/PE_BrkSmalldt.o \
+	$(OPATH)/PE_BrkStep.o \
+	$(OPATH)/PMF_CalEmt.o \
+	$(OPATH)/PMF_Dealloc.o \
+	$(OPATH)/PMF_InitMem.o \
+	$(OPATH)/PMF_InitStandard.o \
+	$(OPATH)/PMF_ReadIn.o \
+	$(OPATH)/PMF_SetGndTag.o \
+	$(OPATH)/PMF_Snapshot.o \
+	$(OPATH)/PMF_Step.o \
+	$(OPATH)/PMF_Transform.o \
+	$(OPATH)/Pub_Alloc.o \
+	$(OPATH)/Pub_AnlysFile.o \
+	$(OPATH)/Pub_Cmplx.o \
+	$(OPATH)/Pub_Dbg.o \
+	$(OPATH)/Pub_Dealloc.o \
+	$(OPATH)/Pub_Err.o \
+	$(OPATH)/Pub_HexCnvt.o \
+	$(OPATH)/Pub_MaReg.o \
+	$(OPATH)/Pub_Mat.o \
+	$(OPATH)/PMF_SimVarIO.o \
+	$(OPATH)/Pub_TrABC.o \
+	$(OPATH)/Sr_1PCI.o \
+	$(OPATH)/Sr_1PCtrI.o \
+	$(OPATH)/Sr_1PCtrV.o \
+	$(OPATH)/Sr_1PCV.o \
+	$(OPATH)/Sr_3PCI.o \
+	$(OPATH)/Sr_3PCV.o \
+	$(OPATH)/Sr_IndepV.o \
+	$(OPATH)/Tr_1P2W.o \
+	$(OPATH)/Tr_1P2WIdeal.o \
+	$(OPATH)/Tr_1P3W.o \
+	$(OPATH)/Tr_3P2W.o \
+	$(OPATH)/Tr_3P2WIdeal.o \
+	$(OPATH)/UDModel/modudmitf_Xnew.o
+
+#Cobjects = $(OPATH)/cal_sock.o \
+	$(OPATH)/para_send.o \
+	$(OPATH)/MPIFifo/dataqueue.o \
+	$(OPATH)/Pub_Func70.o \
+	$(OPATH)/MPIFifo/sharememory.o
+
+rcs= 
+
+include Mcifrtib70io64
